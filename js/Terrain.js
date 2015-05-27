@@ -73,11 +73,11 @@ function Terrain(ctx,x,y){
 
 	this.drawRotate = function(ang){
 		ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-		ctx.save();
+		// ctx.save();
 		ctx.translate(x,y);
 		ctx.translate(img_width/2,img_height/2);
 		ctx.rotate(-ang);
 		ctx.drawImage(img,-(img_width/2),-(img_height/2),img_width,img_height);
-		ctx.restore();
+		// ctx.restore();
 	}
 }
