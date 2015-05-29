@@ -1,4 +1,4 @@
-var canvas = document.getElementById("canvas");
+var canvas = document.getElementById("ship");
 var terrain = document.getElementById("terrain");
 
 canvas.width = window.innerWidth;
@@ -8,6 +8,7 @@ terrain.width = window.innerWidth;
 terrain.height = window.innerHeight;
 
 var ctx = canvas.getContext("2d");
+
 var ter_ctx = terrain.getContext("2d");
 
 if(ctx && ter_ctx){
@@ -17,22 +18,20 @@ else{
 	alert("contesto non supportato");
 }
 
-
 var ship;
 var key;
-var pressing_time = 0;
-var timer;
-var start_timer = null;
-var moves = null;
 var terra;
-var zoomed = false;
+var zoomed;
+var inGame;
 
 function start(){
-	ship = new Ship((window.innerWidth/2),(window.innerHeight/2),300,ctx);
-	terra = new Terrain(ter_ctx,0,0);
+	ship = new Ship(10,10,300,ctx);
+	ship.rotate(-Math.PI/6)
+	terra = new Terrain(ter_ctx,(window.innerWidth/2),(window.innerHeight/2));
 	key = [];
 	ship.draw();
 	terra.draw();
+	inGame=true;
 	render();
 }
 
@@ -42,79 +41,76 @@ document.addEventListener("keyup",onKeyUp);
 
 function onKeyDown(evt){
 	key[evt.key]=true;
-	time_elapsed(timer)
 }
 
 function onKeyUp(evt){
 	key[evt.key]=false;
-	pressing_time=0;
-	moves = null;
-	start_timer=null;
 }
 
 function moving_ship(){
 	if(key["ArrowUp"]){
-		moves = new Vector2d(0,-0.02*pressing_time);
+		if(ship.get_moving()<5){
+			ship.moving(0.036);
+			ship.setSpeed(ship.getSpeed()-0.036);
+		}
+	}
+	else if(ship.get_moving()>0){
+		ship.moving(-0.036);
+		ship.setSpeed(ship.getSpeed()+0.036);
 	}
 	if(key["ArrowLeft"]){
-		//ship.setAngle(ship.getAngle()+(1.5*Math.PI/180));
-		ship.rotate(1.5*Math.PI/180);
-	}
-	else if(key["ArrowRight"]){
 		ship.rotate(-1.5*Math.PI/180);
 	}
-}
-
-function moving_terrain(){
-	if(key["ArrowUp"]){
-		moves = new Vector2d(0,+0.02*pressing_time);
-	}
-	if(key["ArrowLeft"]){
-		terra.setAngle(terra.getAngle()-(1.5*Math.PI/180));
-	}
 	else if(key["ArrowRight"]){
-		terra.setAngle(terra.getAngle()+(1.5*Math.PI/180));
+		ship.rotate(1.5*Math.PI/180);
 	}
 }
 
-function render(timestamp){
-	timer = timestamp;
-	if(!zoomed){
-		moving_ship();
-		ship.move(moves);
+function render(){
+	if(inGame){
 		ship.draw();
-		
-	}
-	else{
-		moving_terrain();
-		terra.move(moves);
-		terra.draw();
-	}
-	if (ship.getAltitude()<10 && !zoomed){
-		zoom();
-	} 
-	else{
+		moving_ship();
+		ship.move();
+				
+		if (ship.getAltitude()<250 && !zoomed){
+			zoom();
+		}
+		else if (ship.getAltitude()>window.innerHeight-30 && zoomed){
+			unzoom();
+		}
 		requestAnimationFrame(render);	
 	}
-	
-}
-
-function time_elapsed(timestamp){
-	if(!start_timer) start_timer = timestamp;
-	pressing_time = (timestamp - start_timer)/100;
 }
 
 function zoom(){
+	terra.setCenterX(ship.getX()*2);
+	terra.setCenterY(ship.getY()*2);
 
-	ship.setX(window.innerWidth/2);
-	ship.setY(window.innerHeight/2);
-	ship.setSize(50);
-	ship.setAngle(0);
-	ship.draw();
+	ship.setPosition(window.innerWidth/2,window.innerHeight/2);
+	ship.setSize(ship.getSize()*2);
+	
+	ship.draw(true);
 
 	terra.setSize(window.innerWidth*2,window.innerHeight*2);
-	terra.setX(-(ship.getX()));
-	terra.setY(-(ship.getY()));
+	
+	terra.draw();
 
+	//inGame = false;
 	zoomed=true;
+}
+
+
+function unzoom(){
+	terra.setCenterX(window.innerWidth/2);
+	terra.setCenterY(window.innerHeight/2);
+	terra.setSize(window.innerWidth,window.innerHeight);
+	terra.draw();
+
+	ship.setPosition(ship.getX(),window.innerHeight-260);
+	ship.setSize(ship.getSize()/2)
+	ship.draw();
+
+
+	zoomed = false;
+
 }

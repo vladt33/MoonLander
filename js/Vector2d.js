@@ -10,6 +10,10 @@ function Vector2d(x,y){
 		return y
 	}
 
+	this.setY = function(new_y){
+		y = new_y;
+	}
+
 	this.get_components= function(){
 		return {x_c : x,y_c:y}
 	}

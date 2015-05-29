@@ -2,23 +2,39 @@ function Ship(pos_x,pos_y,fuel,ctx){
 
 	/* private attributes */
 
+	var ctx = ctx;
 	var x = pos_x;
 	var y = pos_y;
 	var ship_size = 10;
 	var angle = 0;
 	var fuel = fuel;
+	var speed = 0;
 	var alt;
 	altitude();
+	var isMoving = 0;
 	var img = new Image();
+
+	img.onLoad = function(){
+		ctx.drawImage(img,0,0,window.innerWidth,window.innerHeight);
+	}
+
 	img.src = "./img/SpaceShip.png";
-	var final_move = new Vector2d(0,1.6);
-	var ctx = ctx;
+	var final_move = new Vector2d(0,speed);
+	
 	ctx.translate(x,y);
+	ctx.save();
 
 	/* private methods */
 
 	function altitude(){
 		alt = window.innerHeight - y;
+	}
+
+	function clear(){
+		ctx.save();
+		ctx.translate(-ship_size,-ship_size);
+		ctx.clearRect(0,0,ship_size*3,ship_size*3);
+		ctx.restore();
 	}
 
 	/* public methods */
@@ -30,9 +46,26 @@ function Ship(pos_x,pos_y,fuel,ctx){
 		return y;
 	}
 
+	this.getSpeed = function(){
+		return speed;
+	}
+
+	this.setSpeed = function(new_speed){
+		speed = new_speed;
+	}
+
 	this.setX = function(new_x){
 		x = new_x
 	}
+
+	this.moving = function(n){
+		isMoving+=n;
+	}
+
+	this.get_moving = function(){
+		return isMoving;
+	}
+
 	this.setY = function(new_y){
 		y = new_y
 	}
@@ -41,11 +74,20 @@ function Ship(pos_x,pos_y,fuel,ctx){
 		ship_size = new_size;
 	}
 
+	this.getSize=function(){
+		return ship_size;
+	}
+
 	this.getAltitude = function(){
 		return alt;
 	}
 
 	this.setPosition = function(new_x,new_y){
+		clear();
+		ctx.restore();
+		ctx.save()
+		ctx.translate(new_x,new_y);
+		ctx.rotate(angle);
 		x = new_x;
 		y = new_y;
 	}
@@ -58,49 +100,42 @@ function Ship(pos_x,pos_y,fuel,ctx){
 		return angle;
 	}
 
-	this.draw = function(){
-		// ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+	this.draw = function(zoomed){
 		clear();
-		// ctx.drawImage(img,x,y,ship_size,ship_size);
-		//this.drawRotate(angle);
 		ctx.drawImage(img,-(ship_size/2),-(ship_size/2),ship_size,ship_size);
+		
 	}
 
 	this.getFinalMove = function(){
 		return final_move;
 	}
 
-	this.move = function(new_vect){
-		this.calculate_move(new_vect);
-		var coord = final_move.get_components();
-		x += coord["x_c"];
-		y += coord["y_c"];
-		ctx.translate(0,coord["y_c"]);
-		console.log(x+" "+y);
-		altitude();
+
+	this.set_final_move=function(vect){
+		final_move = vect;
 	}
 
-	this.calculate_move = function(new_vect){
-		var dist;
-		if(new_vect && final_move.getY()>=-3.6){
-				final_move.add(new_vect)
+	this.falling = function(){
+		ctx.rotate(-angle);
+		ctx.translate(0,0.6);
+		ctx.rotate(angle);
+	}
+
+	this.move = function(){ 
+		final_move.setY(speed);
+		var coord = final_move.get_components();
+		x = ctx["mozCurrentTransform"][4];
+		y = ctx["mozCurrentTransform"][5];
+		if(isMoving>0){
+			ctx.translate(0,coord["y_c"]);
 		}
-		else{
-			if(final_move.getY()<0.5){
-				final_move.add(new Vector2d(0,0.07));
-			}
-		}
+		this.falling();
+		altitude();
 	}
 
 	this.rotate = function(ang){
 		ctx.rotate(ang);
-		angle = ang;
+		angle += ang;
 	}
 
-	function clear(){
-		ctx.save();
-		ctx.translate(-(ship_size/2)-5,-(ship_size/2)-5);
-		ctx.clearRect(0,0,ship_size+10,ship_size+10);
-		ctx.restore();
-	}
 }
